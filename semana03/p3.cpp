@@ -31,7 +31,7 @@ int printSolution(int dist[], int n)
 
 // Function that implements Dijkstra's single source shortest path algorithm 
 // for a graph represented using adjacency matrix representation 
-void dijkstra(vector< vector<int> > graph, int src, int len, vector< vector<int> > idade, int op)
+void dijkstra(vector< vector<int> > graph, int src, int len, int op)
 {
 
     int dist[len];     // The output array.  dist[i] will hold the shortest 
@@ -45,12 +45,13 @@ void dijkstra(vector< vector<int> > graph, int src, int len, vector< vector<int>
    
     // Distance of source vertex from itself is always 0 
     dist[src] = 0; 
-   
+    
     // Find shortest path for all vertices 
     for (int count = 0; count < len-1; count++)
     { 
         // Pick the minimum distance vertex from the set of vertices not 
         // yet processed. u is always equal to src in the first iteration. 
+
         int u = minDistance(dist, sptSet, len); 
    
        // Mark the picked vertex as processed 
@@ -61,10 +62,10 @@ void dijkstra(vector< vector<int> > graph, int src, int len, vector< vector<int>
         // Update dist[v] only if is not in sptSet, there is an edge from  
         // u to v, and total weight of path from src to  v through u is  
         // smaller than current value of dist[v] 
-            if (!sptSet[v] && graph[u][v] && idade[u][v] == op && dist[u] != INT_MAX && dist[u]+graph[u][v] < dist[v]) 
+            if (!sptSet[v] && graph[u][v] != -1 && dist[u] != INT_MAX && dist[u]+graph[u][v] < dist[v]) 
                 dist[v] = dist[u] + graph[u][v]; 
     } 
-   
+    
     // print the constructed distance array 
     //printSolution(dist, len);
     if (op == -1) {
@@ -86,6 +87,14 @@ void showlist(list <char> g)
         cout << " " << *it;
 }
 
+//function for printing the elements in a list 
+void showlistInt(int *g, int len) 
+{ 
+     
+    for(int it = 0; it < len; ++it) 
+        cout << " " << g[it];
+}
+
 void showMat(vector < vector<int> > m, int l) {
     for (int i=0; i<l; i++) {
         for (int j=0; j<l; j++) {
@@ -96,6 +105,7 @@ void showMat(vector < vector<int> > m, int l) {
 }
 
 int main() {
+    int c = 0;
     while (1) {
         int op, id_jovem_pos, id_adulto_pos;
         char JOVEM_POS, ADULTO_POS;
@@ -103,18 +113,18 @@ int main() {
         cin >> op;
         map<char, int> tradutor = {};
         map<int, char> decodificador = {};
-        vector< vector<int> > m_adjacente;
-        vector< vector<int> > m_idade;
+        vector< vector<int> > m_adjacente_jovem;
+        vector< vector<int> > m_adjacente_adulto;
 
         if(op == 0)
             break;
-        int max_len = 2*op;
+        int max_len = 2*op + 2;
         int len = 1;
-        m_adjacente.resize(max_len);
-        m_idade.resize(max_len);
+        m_adjacente_jovem.resize(max_len);
+        m_adjacente_adulto.resize(max_len);
         for (int i=0; i<max_len; i++) {
-            m_adjacente[i].resize(max_len, 0);
-            m_idade[i].resize(max_len, 0);
+            m_adjacente_jovem[i].resize(max_len, -1);
+            m_adjacente_adulto[i].resize(max_len, -1);
         }
 
         for(int i=0; i<op; i++) {
@@ -133,6 +143,9 @@ int main() {
             cin >> P2;
             cin >> w;
 
+            if (c == 802) {
+                cout << I << " " << T << " " << P1 << " " << P2 << " " << w << endl;
+            }
             if (tradutor[P1] == 0) {
                 tradutor[P1] = len;
                 decodificador[len] = P1;
@@ -151,71 +164,83 @@ int main() {
             }
 
             if (T == 'U') { //unilateral
-                m_adjacente[p1][p2] = w;
-                m_idade[p1][p2] = op;
+                if (op == -1)
+                    m_adjacente_jovem[p1][p2] = w;
+                else
+                    m_adjacente_adulto[p1][p2] = w;
             } else { //bilateral
-                m_adjacente[p1][p2] = w;
-                m_adjacente[p2][p1] = w;
-                m_idade[p1][p2] = op;
-                m_idade[p2][p1] = op;
+                if (op == -1) {
+                    m_adjacente_jovem[p1][p2] = w;
+                    m_adjacente_jovem[p2][p1] = w;
+                } else {
+                    m_adjacente_adulto[p1][p2] = w;
+                    m_adjacente_adulto[p2][p1] = w;
+                }
             }
         }
         cin >> JOVEM_POS;
         cin >> ADULTO_POS;
 
-        if (tradutor[JOVEM_POS == 0]) {
+        //if (c == 802)
+        //cout << JOVEM_POS << " " << ADULTO_POS << endl;
+
+        if (tradutor[JOVEM_POS] == 0) {
             tradutor[JOVEM_POS] = len;
+            decodificador[len] = JOVEM_POS;
             id_jovem_pos = len-1;
             len++;
         } else {
             id_jovem_pos = tradutor[JOVEM_POS]-1;
         }
-        if (tradutor[ADULTO_POS == 0]) {
+        if (tradutor[ADULTO_POS] == 0) {
             tradutor[ADULTO_POS] = len;
+            decodificador[len] = ADULTO_POS;
             id_adulto_pos = len-1;
             len++;
         } else {
             id_adulto_pos = tradutor[ADULTO_POS]-1;
         }
 
-        dijkstra(m_adjacente, id_jovem_pos, len-1, m_idade, -1);
-        dijkstra(m_adjacente, id_adulto_pos, len-1, m_idade, 1);
+        //cout << tradutor[JOVEM_POS] << " " << tradutor[ADULTO_POS] << " " << len << endl;
+
+        dijkstra(m_adjacente_jovem, id_jovem_pos, len-1, -1);
+        dijkstra(m_adjacente_adulto, id_adulto_pos, len-1, 1);
+
 
         int ind_menor_lugar;
         int menor_custo = INT_MAX;
         int soma_acumulada[len-1];
-
-
+        int max = INT_MAX;
+        
+        
         for(int i=0; i<len-1; i++) {
             int soma;
             
-            if (dist_jovem[i] == INT_MAX || dist_adulto[i] == INT_MAX)
-                soma = soma_acumulada[i] = INT_MAX;
+            if (dist_jovem[i] == max || dist_adulto[i] == max)
+                soma = soma_acumulada[i] = max;
             else
                 soma = soma_acumulada[i] = dist_adulto[i]+dist_jovem[i];
             
-            //cout << "Aqui !!" << endl;
             if (soma < menor_custo)
                 menor_custo = soma, ind_menor_lugar=i;
         }
 
-        if (menor_custo == INT_MAX) {
+        if (menor_custo == max) {
             cout << "You will never meet." << endl;
-            break;
+            continue;
         }
-
-
+                
         list <char> lista_final;
         for (int i=0; i<len-1; i++) {
             if (soma_acumulada[i] == menor_custo) {
                 lista_final.push_back(decodificador[i+1]);
             }
         }
-
         lista_final.sort();
-        cout << menor_custo << " ";
+        cout << menor_custo;
         showlist(lista_final);
         cout << endl;
+        c++;
     }
     return 0;
 }
