@@ -4,8 +4,6 @@
 
 using namespace std;
 
-vector <int> dist_jovem;
-vector <int> dist_adulto;
 
 // A utility function to find the vertex with minimum distance value, from 
 // the set of vertices not yet included in shortest path tree 
@@ -29,19 +27,28 @@ int printSolution(int dist[], int n)
       printf("%d tt %d\n", i, dist[i]); 
 } 
 
+
 // Function that implements Dijkstra's single source shortest path algorithm 
 // for a graph represented using adjacency matrix representation 
 long dijkstra(vector< vector<int> > graph, int src, int len, int to)
 {
+	/*
 
     int dist[len];     // The output array.  dist[i] will hold the shortest 
                       // distance from src to i 
     bool sptSet[len]; // sptSet[i] will be true if vertex i is included in shortest 
                      // path tree or shortest distance from src to i is finalized 
-     // Initialize all distances as INFINITE and stpSet[] as false 
-    for (int i = 0; i < len; i++) 
-        dist[i] = INT_MAX, sptSet[i] = false; 
-   
+    // Initialize all distances as INFINITE and stpSet[] as false
+    priority_queue<pair<int, int> > pq; 
+
+    for (int i = 0; i < len; i++) {
+        dist[i] = INT_MAX, sptSet[i] = false;
+        if (i == src)
+        	pq.push(make_pair(0, i))
+       	else
+       		pq.push(make_pair(INT_MAX, i))
+    }
+
     // Distance of source vertex from itself is always 0 
     dist[src] = 0;
     
@@ -65,8 +72,51 @@ long dijkstra(vector< vector<int> > graph, int src, int len, int to)
                 dist[v] = dist[u] + graph[u][v];
             }
         }
+    }*/
+
+	if (len == 0)
+    	return -1;
+
+    vector<int> dist;
+    vector<bool> vis;
+    priority_queue <pair<int, int>, vector<pair<int, int> >, greater<pair<int, int> > > que;
+
+    dist.resize(len+1, INT_MAX);
+    vis.resize(len+1, false);
+    que.push({0, src});
+    dist[src] = 0;
+
+    while(!que.empty()) {
+        int u = que.top().second;
+        que.pop();
+
+        if(vis[u]) continue;
+
+        /*
+        for(long i = 0; i < len; i++) {
+            long vizinho = graph[u].at(i).first;
+            long custo = graph[u].at(i).second;
+
+            if(!vis[vizinho] && dist[vizinho] > dist[u] + custo) {
+                dist[vizinho] = dist[u] + custo;
+                que.push({dist[vizinho], vizinho});
+            }
+        }*/
+
+        for (int v = 0; v < len; v++){
+        // Update dist[v] only if is not in sptSet, there is an edge from  
+        // u to v, and total weight of path from src to  v through u is  
+        // smaller than current value of dist[v] 
+            if (!vis[v] && graph[u][v] != -1 && dist[u] != INT_MAX && dist[u]+graph[u][v] < dist[v]) {
+                dist[v] = dist[u] + graph[u][v];
+                que.push({dist[v], v});
+            }
+        }
+
+        vis[u] = true;
     }
-    //cout << "Aqui 223" << endl;
+
+
     if (dist[to] == INT_MAX)
         return -1;
     else
@@ -99,8 +149,7 @@ void showMat(vector < vector<int> > m, int l) {
 }
 
 int main() {
-    int c = 0;
-    int num_cases;
+    long num_cases = 0;
     cin >> num_cases;
 
     for (int d=0; d<num_cases; d++) {
@@ -109,26 +158,40 @@ int main() {
         cin >> m;
         cin >> S;
         cin >> T;
-        vector< vector<int> > m_adjacente_tempo;
-        m_adjacente_tempo.resize(m+1);
-
-        map<int, int> tradutor = {};
-        map<int, int> decodificador = {};
-
-        for (int i=0; i<m+1; i++) {
-            m_adjacente_tempo[i].resize(m+1, -1);
+        if (m == 0) {
+        	cout << "Case #" << d+1 << ": ";
+        	cout << "unreachable" << endl;
+        	continue;
         }
 
+
+        vector< vector<int> > m_adjacente_tempo;
+
+        vector <pair <int, vector< pair <int, int> > > > m_adacencia;
+        m_adacencia.resize(n);
+
+        m_adjacente_tempo.resize(n);
+
+
+        map<int, int> tradutor = {};
+
+        for (int i=0; i<n; i++) {
+        	m_adjacente_tempo[i].resize(n, -1);
+        }
+
+
         for (int f = 0; f<m; f++) {
-            int P1, P2, p1, p2, W;
+        	int P1 , P2;
+            int p1, p2, W;
 
             cin >> P1;
             cin >> P2;
             cin >> W;
 
+            
+
             if (tradutor[P1] == 0) {
                 tradutor[P1] = len;
-                decodificador[len] = P1;
                 p1 = len-1;
                 len++;
             } else {
@@ -136,25 +199,31 @@ int main() {
             }
             if (tradutor[P2] == 0) {
                 tradutor[P2] = len;
-                decodificador[len] = P2;
                 p2 = len-1;
                 len++;
             } else {
                 p2 = tradutor[P2]-1;
             }
 
-            m_adjacente_tempo[p1][p2] = m_adjacente_tempo[p2][p1] = W;
+            if (m_adjacente_tempo[p1][p2] == -1 || (m_adjacente_tempo[p1][p2] != -1 && m_adjacente_tempo[p1][p2] > W))
+            	m_adjacente_tempo[p1][p2] = m_adjacente_tempo[p2][p1] = W;
+
         }
 
-        if (d == 27)
-            cout << "aqui" << endl << tradutor[S] << " " << tradutor[T] << " " << len << endl;
-        int menor = dijkstra(m_adjacente_tempo, tradutor[S]-1, len-1, tradutor[T]-1);
-
+        
         cout << "Case #" << d+1 << ": ";
-        if (menor == -1 || ((tradutor[S] == 0 || tradutor[T] == 0) && S != T ))
+        if ((tradutor[S] == 0 || tradutor[T] == 0) && S != T ) {
             cout << "unreachable" << endl;
+            continue;
+        }
+        int menor;
+        menor = dijkstra(m_adjacente_tempo, tradutor[S]-1, len-1, tradutor[T]-1);
+
+        
+        if (menor == -1)
+        	cout << "unreachable" << endl;
         else
-            cout << menor << endl;
+        	cout << menor << endl;
 
     }
     
