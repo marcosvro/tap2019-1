@@ -1,13 +1,16 @@
-#include <iostream>
-#include <list>
-#include <queue>
-#include <vector>
-#include <iomanip>
-#include <math.h>
+#include <bits/stdc++.h>
+
+// #include <list>
+// #include <queue>
+// #include <vector>
+// #include <iomanip>
+// #include <math.h>
+
 
 using namespace std;
 
 typedef pair< int, int > pi;
+
 typedef pair< float, int > pfi;
 
 const int INF = 1000000001;
@@ -147,6 +150,7 @@ int show_better_in_path(int from, int to) {
 	}
 }
 int main() {
+	ios::sync_with_stdio();
 	while (inputRead()) {
 		prim_modificado(0);
 		int num_queues;
