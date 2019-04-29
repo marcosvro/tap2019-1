@@ -127,7 +127,6 @@ void prim_modificado( int source )
 				pq.push( make_pair( key[v], v ) );
 			}
 		}
-
 		i++;
 	}
 } // end of prim()
