@@ -3,20 +3,19 @@
 
 using namespace std;
 
-
 typedef pair< int, pair< int, int > > ppi;
 
-vector< vector< vector< char > > > cube;
+vector< vector< vector< int > > > cube;
 
 
 int l, r, c;           // Number of vertices and edges
-int x, y, z;   		   // Start position
+int x = -1, y = -1, z = -1;   		   // Start position
 
 int inputRead()
 {
 	cin >> l >> r >> c;
 
-	if (l+r+c == 0)
+	if (l+r+c == 0 || cin.fail())
 		return 0;
 
 	char cell;
@@ -28,13 +27,13 @@ int inputRead()
 			for (int k = 0; k < c; ++k)
 			{
 				cin >> cell;
+
 				if (cell == 'S'){
 					cube[i][j][k] = -3;
 					x = i;
 					y = j;
 					z = k;
-				}
-				if (cell == '#')
+				}else if (cell == '#')
 					cube[i][j][k] = -1;
 				else if (cell == '.')
 					cube[i][j][k] = -2;
@@ -50,6 +49,9 @@ int inputRead()
 
 int bfs_modificado()
 {
+	if (x == -1)
+		return 0;
+
 	queue< ppi > q;
 
 	q.push( make_pair( x, make_pair( y, z ) ) );
@@ -61,7 +63,6 @@ int bfs_modificado()
 		ppi v = q.front();
 		int x_ = v.first, y_ = v.second.first, z_ = v.second.second;
 		q.pop();
-
 
 		//up
 		if (x_+1 <= l-1 && cube[x_+1][y_][z_] == -2) {
@@ -99,31 +100,30 @@ int bfs_modificado()
 			cube[x_][y_][z_-1] = cube[x_][y_][z_] + 1;
 		} else if (z_-1 >= 0 && cube[x_][y_][z_-1] == -4)
 			return (int)(cube[x_][y_][z_]) + 1;
-
-		//cout << (int)cube[x][y][z-1] << endl;
 	}
 	return -1;
 } // end of bfs()
 
 
 int main() {
-	cube.resize( 32 );
-	for (int i = 0; i < 32; ++i)
+	cube.resize( 30 );
+	for (int i = 0; i < 30; ++i)
 	{
-		cube[i].resize( 32 );
-		for (int j = 0; j < 32; ++j)
+		cube[i].resize( 30 );
+		for (int j = 0; j < 30; ++j)
 		{
-			cube[i][j].resize( 32, -1 );
+			cube[i][j].resize( 30, -1 );
 		}
 	}
 
-	ios::sync_with_stdio();
+	ios::sync_with_stdio(false);
+	cin.tie(NULL);
 	while (inputRead()) {
 		int t = bfs_modificado();
 		if (t == -1)
-			cout << "Trapped!" << endl;
+			cout << "Trapped!" << "\n";
 		else
-			cout << "Escaped in " << t << " minute(s)." << endl;
+			cout << "Escaped in " << t << " minute(s)." << "\n";
 	}
 	return 0;
 }
