@@ -7,98 +7,136 @@ typedef pair < int, pi > ppi;
 
 const int INF = 1000000001;
 
-vector < ppi > edges; // Edges of the graph
-//priority_queue < ppi, vector< ppi >, less< ppi > > edges;
-vector < ppi > mst; // Edges of the MST
-vector < int > respostas;
-vector < list < int > > conj_ids_consultas;
-vector < int > conj_disj;
+vector < pi > conj_disj;
 int n, m, Q; // Number of vertices and edges
 
 
-void inputRead ()
-{
-	cin >> n >> m;
-	if (cin.fail())
-		return 0;
-	edges.reserve( m );
-	mst.reserve( n - 1 );
-	conj_ids_consultas.reserve(n);
-	conj_disj.reserve(n);
-
-	for (int i = 0; i < m; i++)
-	{
-		int from , to , weight;
-
-		cin >> from >> to >> weight;
-
-		// C++11 : edges.push_back( {weight , {from , to}} );
-		edges.push_back ( make_pair ( weight , make_pair ( from-1 , to-1 ) ) );
-	}
-	cin >> Q;
-	respostas.reserve(Q);
-
-	for (int i = 0; i < Q; i++) {
-		int from, to;
-
-		cin >> from >> to;
-
-		conj_ids_consultas[from-1].push_back(i);
-		conj_ids_consultas[to-1].push_back(i);
-	}
+int findSet(int x) {
+	if (x != conj_disj[x].first)
+		conj_disj[x].first = findSet(conj_disj[x].first);
+	return conj_disj[x].first;
 }
 
-void kruskal ()
-{
-	// Sort edges in increasing order by weight
-	sort(edges.begin (), edges.end ());
-	// Create a disjoint set to each vertex
-	//disjointSets ds( n );
-	for (int i=0; i<n; i++) {
-		conj_disj[i] = i;
-	}
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(NULL);
 
+	int peloMenosCaso = 0;
+	while (true) {
+		//input read
+		vector < ppi > edges; // Edges of the graph
+		vector < int > respostas;
+		vector < list < int > > conj_ids_consultas;
+		cin >> n >> m;
+		
+		if (cin.fail())
+			return 0;
+		if (peloMenosCaso)
+			cout << "\n";
+		edges.reserve( m );
+		conj_ids_consultas.reserve(n);
+		conj_disj.reserve(n);
 
-
-	int c = 1;
-
-	vector < ppi >:: iterator it;
-	// Iterate through all sorted edges
-	for (it = edges.begin (); c < n; it ++)
-	{
-		int u = it ->second.first;
-		int v = it ->second.second;
-		int weight = it ->first;
-
-		int set_u = ds.find( u );
-		int set_v = ds.find( v );
-
-		if (set_u != set_v)
+		for (int i = 0; i < m; i++)
 		{
-			// Current edge belongs to the MST
-			//mst.push_back ( make_pair ( it ->first , make_pair ( u, v ) ) );
+			int from , to , weight;
 
-			for (list < int >::iterator uit = conj_ids_consultas[u].begin(); uit != conj_ids_consultas[u].end(); uit++) {
-				bool erased = false;
-				for (list < int >::iterator vit = conj_ids_consultas[v].begin(); vit != conj_ids_consultas[v].end() && uit != conj_ids_consultas[u].end(); vit++) {
-					if (*uit == *vit) {
-						erased = true;
-						conj_ids_consultas[u].erase(*uit);
-						conj_ids_consultas[v].erase(*vit);
-						continue;
-					}
-					vit++;
-				}
-				if (!erased)
-					uit++;
-			}
-			ds.merge( set_u , set_v ); // Union of sets of u and v
-			c++;
+			cin >> from >> to >> weight;
+
+			// C++11 : edges.push_back( {weight , {from , to}} );
+			edges.push_back ( make_pair ( weight , make_pair ( from-1 , to-1 ) ) );
+
 		}
+		cin >> Q;
+		respostas.reserve(Q);
+		cout << "Aqui !!" << "\n";
+
+		for (int i = 0; i < Q; i++) {
+			int from, to;
+
+			cin >> from >> to;
+
+			conj_ids_consultas[from-1].push_back(i);
+			conj_ids_consultas[to-1].push_back(i);
+		}
+		//end of input read
+
+
+		//kruskal
+		// Sort edges in increasing order by weight
+		sort(edges.begin (), edges.end ());
+		// Create a disjoint set to each vertex
+		for (int i=0; i<n; i++) {
+			conj_disj[i] = make_pair( i, 0 );
+		}
+
+		int c = 1;
+
+		cout << "Aqui !!" << "\n";
+		vector < ppi >:: iterator it;
+		// Iterate through all sorted edges
+		for (it = edges.begin (); c < n; it ++)
+		{
+			int u = it ->second.first;
+			int v = it ->second.second;
+			int weight = it ->first;
+
+			int set_u = findSet( u );
+			int set_v = findSet( v );
+
+			if (set_u != set_v)
+			{
+				// Current edge belongs to the MST
+				//mst.push_back ( make_pair ( it ->first , make_pair ( u, v ) ) );
+
+				for (list < int >::iterator uit = conj_ids_consultas[u].begin(); uit != conj_ids_consultas[u].end(); uit++) {
+					bool erased = false;
+					for (list < int >::iterator vit = conj_ids_consultas[v].begin(); vit != conj_ids_consultas[v].end() && uit != conj_ids_consultas[u].end(); vit++) {
+						if (*uit == *vit) {
+							respostas[*uit] = weight;
+							erased = true;
+							conj_ids_consultas[u].erase(uit);
+							conj_ids_consultas[v].erase(vit);
+							break;
+						}
+						vit++;
+					}
+					if (!erased)
+						uit++;
+				}
+
+				// Union of sets of u and v
+				int x_set = findSet(set_u);
+				int y_set = findSet(set_v);
+				if (conj_disj[x_set].second > conj_disj[y_set].second) {
+					conj_disj[y_set].first = x_set;
+					for (list <int>::iterator aux_it = conj_ids_consultas[y_set].begin(); aux_it != conj_ids_consultas[y_set].end(); ++aux_it) {
+						conj_ids_consultas[x_set].push_back(*aux_it);
+					}
+				} else {
+					conj_disj[x_set].first = y_set;
+					for (list <int>::iterator aux_it = conj_ids_consultas[x_set].begin(); aux_it != conj_ids_consultas[x_set].end(); ++aux_it) {
+						conj_ids_consultas[y_set].push_back(*aux_it);
+					}
+					if (conj_disj[x_set].second == conj_disj[y_set].second)
+						conj_disj[y_set].second++;
+				}
+
+				c++;
+			}
+		}
+		//end of kruskal
+
+		for (int i=0; i< Q; i++)
+			cout << respostas[i] << "\n";
+
+		peloMenosCaso = 1;
 	}
-} // end of kruskal()
 
+	return 0;
+}
 
+/*
 int main() {
 	ios::sync_with_stdio(false);
 	cin.tie(NULL);
@@ -221,3 +259,4 @@ int main() {
 	}
 	return 0;
 }
+*/
