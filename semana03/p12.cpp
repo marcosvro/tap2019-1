@@ -6,10 +6,8 @@ using namespace std;
 
 const int INF = 0x3f3f3f3f;
 
-//map< pair< string, string >, int > encoder;
-//vector< list< int > > graph; // Adjacency list
-vector < int > parent;
-//vector < int > dist;
+typedef pair < string, string > ps;
+int factor = 100;
 
 
 
@@ -21,9 +19,8 @@ int main() {
 
 	for (int i = 0; i < num_cases; ++i)
 	{
-		map< pair< string, string >, int > encoder;
+		map< ps, int > encoder;
 		vector< list< int > > graph; // Adjacency list
-		vector < int > dist;
 		int n;            // Number of vertices and edges
 		int p, qn;
 
@@ -36,7 +33,7 @@ int main() {
 
 		cin >> p >> qn;
 
-		graph.resize( p*5 + 1 );
+		graph.resize( factor );
 
 		encoder[make_pair("Erdos","P.")] = num_auth;
 		num_auth++;
@@ -53,13 +50,14 @@ int main() {
 				test = second_names.back();
 				second_names.pop_back();
 				first_name.pop_back();
-				pair < string,string > autor = make_pair(first_name, second_names);
+				ps autor = make_pair(first_name, second_names);
 
 				if (encoder[autor] == 0){ // não existe esse autor no DB 
 					encoder[autor] = num_auth;
 					num_auth++;
-					if (num_auth >= p*5) {
-						graph.resize( num_auth );
+					if (num_auth >= factor) {
+						factor *= 2;
+						graph.resize( factor );
 					}
 				}
 				autores_ids.push_back( encoder[autor]-1 );
@@ -79,7 +77,8 @@ int main() {
 
 		n = num_auth-1;
 
-		dist.resize( n , INF );
+		vector < int > dist (n, INF);
+		//dist.resize( n , INF );
 
 
 		//end input
@@ -113,7 +112,7 @@ int main() {
 		{
 			cin >> first_name >> second_names;
 			first_name.pop_back();
-			pair < string, string > aux = make_pair(first_name, second_names);
+			ps aux = make_pair(first_name, second_names);
 			if (encoder[aux] == 0) {
 				cout << first_name << ", " << second_names << " infinity" << "\n";
 			} else {
