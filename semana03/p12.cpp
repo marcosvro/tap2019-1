@@ -11,8 +11,6 @@ const int INF = 0x3f3f3f3f;
 vector < int > parent;
 //vector < int > dist;
 
-int n;            // Number of vertices and edges
-int p, qn;
 
 
 int main() {
@@ -26,6 +24,8 @@ int main() {
 		map< pair< string, string >, int > encoder;
 		vector< list< int > > graph; // Adjacency list
 		vector < int > dist;
+		int n;            // Number of vertices and edges
+		int p, qn;
 
 		cout << "Scenario " << i+1 << "\n";
 
@@ -46,6 +46,10 @@ int main() {
 			list < int > autores_ids;
 			do {
 				cin >> first_name >> second_names;
+				if (cin.fail())
+					return 0;
+				if (first_name.front() == ':')
+					break;
 				test = second_names.back();
 				second_names.pop_back();
 				first_name.pop_back();
@@ -61,12 +65,12 @@ int main() {
 				autores_ids.push_back( encoder[autor]-1 );
 			} while (test != ':');
 
-			for (list<int>::iterator i = autores_ids.begin(); i != autores_ids.end(); ++i)
+			for (list<int>::iterator it1 = autores_ids.begin(); it1 != autores_ids.end(); ++it1)
 			{
-				for (list<int>::iterator j = autores_ids.begin(); j != autores_ids.end(); ++j)
+				for (list<int>::iterator it2 = autores_ids.begin(); it2 != autores_ids.end(); ++it2)
 				{
-					if (*i != *j)
-						graph[*i].push_back(*j);
+					if (*it1 != *it2)
+						graph[*it1].push_back(*it2);
 				}
 			}
 
@@ -111,10 +115,10 @@ int main() {
 			first_name.pop_back();
 			pair < string, string > aux = make_pair(first_name, second_names);
 			if (encoder[aux] == 0) {
-				cout << first_name << ", " << second_names << " " << "infinity" << "\n";
+				cout << first_name << ", " << second_names << " infinity" << "\n";
 			} else {
 				if (dist[encoder[aux]-1] == INF)
-					cout << first_name << ", " << second_names << " " << "infinity" << "\n";
+					cout << first_name << ", " << second_names << " infinity" << "\n";
 				else
 					cout << first_name << ", " << second_names << " " << dist[encoder[aux]-1] << "\n";
 			}
