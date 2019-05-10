@@ -7,9 +7,29 @@ typedef pair < int, pi > ppi;
 
 const int INF = 1000000001;
 
-vector < pi > conj_disj;
-int n, m, Q; // Number of vertices and edges
+vector < pi > conj_disj (50000);
 
+vector < ppi > edges (100000); // Edges of the graph
+vector < int > respostas (100000);
+vector < list < int > > conj_ids_consultas (50000);
+
+/*
+template<typename T>
+std::list<T> intersection_of(const std::list<T>& a, const std::list<T>& b){
+    std::list<T> rtn;
+    std::unordered_multiset<T> st;
+    std::for_each(a.begin(), a.end(), [&st](const T& k){ st.insert(k); });
+    std::for_each(b.begin(), b.end(),
+        [&st, &rtn](const T& k){
+            auto iter = st.find(k);
+            if(iter != st.end()){
+                rtn.push_back(k);
+                st.erase(iter);
+            }
+        }
+    );
+    return rtn;
+}*/
 
 int findSet(int x) {
 	if (x != conj_disj[x].first)
@@ -18,24 +38,29 @@ int findSet(int x) {
 }
 
 int main() {
-	ios::sync_with_stdio(false);
-	cin.tie(NULL);
+	//ios::sync_with_stdio(false);
+	//cin.tie(NULL);
 
 	int peloMenosCaso = 0;
+
 	while (true) {
 		//input read
-		vector < ppi > edges; // Edges of the graph
-		vector < int > respostas;
+		// edges; // Edges of the graph
+		//vector < int > respostas;
 		vector < list < int > > conj_ids_consultas;
+		int n, m, Q; // Number of vertices and edges
+		
 		cin >> n >> m;
 		
+		//cout << n << " " << m << "\n";
 		if (cin.fail())
 			return 0;
 		if (peloMenosCaso)
 			cout << "\n";
-		edges.reserve( m );
-		conj_ids_consultas.reserve(n);
-		conj_disj.reserve(n);
+
+		//edges.resize( m );
+		conj_ids_consultas.resize( n );
+		//conj_disj.resize( n );
 
 		for (int i = 0; i < m; i++)
 		{
@@ -43,13 +68,11 @@ int main() {
 
 			cin >> from >> to >> weight;
 
-			// C++11 : edges.push_back( {weight , {from , to}} );
-			edges.push_back ( make_pair ( weight , make_pair ( from-1 , to-1 ) ) );
-
+			//edges[i] = ( {weight , {from , to}} );
+			edges[i] = make_pair ( weight , make_pair ( from-1 , to-1 ) );
 		}
 		cin >> Q;
-		respostas.reserve(Q);
-		cout << "Aqui !!" << "\n";
+		//respostas.resize( Q );
 
 		for (int i = 0; i < Q; i++) {
 			int from, to;
@@ -59,12 +82,18 @@ int main() {
 			conj_ids_consultas[from-1].push_back(i);
 			conj_ids_consultas[to-1].push_back(i);
 		}
-		//end of input read
 
+		for (int i = 0; i < n; ++i)
+		{
+			conj_ids_consultas[i].sort();
+		}
+		//end of input read
 
 		//kruskal
 		// Sort edges in increasing order by weight
-		sort(edges.begin (), edges.end ());
+		vector < ppi >::iterator final_edges = edges.begin()+m;
+		sort(edges.begin (), final_edges);
+		
 		// Create a disjoint set to each vertex
 		for (int i=0; i<n; i++) {
 			conj_disj[i] = make_pair( i, 0 );
@@ -72,13 +101,12 @@ int main() {
 
 		int c = 1;
 
-		cout << "Aqui !!" << "\n";
 		vector < ppi >:: iterator it;
 		// Iterate through all sorted edges
 		for (it = edges.begin (); c < n; it ++)
 		{
-			int u = it ->second.first;
-			int v = it ->second.second;
+			int u = it->second.first;
+			int v = it->second.second;
 			int weight = it ->first;
 
 			int set_u = findSet( u );
@@ -86,46 +114,52 @@ int main() {
 
 			if (set_u != set_v)
 			{
-				// Current edge belongs to the MST
-				//mst.push_back ( make_pair ( it ->first , make_pair ( u, v ) ) );
-
-				for (list < int >::iterator uit = conj_ids_consultas[u].begin(); uit != conj_ids_consultas[u].end(); uit++) {
-					bool erased = false;
-					for (list < int >::iterator vit = conj_ids_consultas[v].begin(); vit != conj_ids_consultas[v].end() && uit != conj_ids_consultas[u].end(); vit++) {
-						if (*uit == *vit) {
-							respostas[*uit] = weight;
-							erased = true;
-							conj_ids_consultas[u].erase(uit);
-							conj_ids_consultas[v].erase(vit);
-							break;
-						}
-						vit++;
-					}
-					if (!erased)
-						uit++;
-				}
-
 				// Union of sets of u and v
-				int x_set = findSet(set_u);
-				int y_set = findSet(set_v);
-				if (conj_disj[x_set].second > conj_disj[y_set].second) {
-					conj_disj[y_set].first = x_set;
-					for (list <int>::iterator aux_it = conj_ids_consultas[y_set].begin(); aux_it != conj_ids_consultas[y_set].end(); ++aux_it) {
-						conj_ids_consultas[x_set].push_back(*aux_it);
+				if (conj_disj[set_u].second > conj_disj[set_v].second) {
+					conj_disj[set_v].first = set_u;
+					
+					list < int >::iterator u_it = conj_ids_consultas[set_u].begin();
+					list < int >::iterator v_it = conj_ids_consultas[set_v].begin();
+					while(v_it != conj_ids_consultas[set_v].end()) {
+						if (u_it == conj_ids_consultas[set_u].end() || *v_it < *u_it) {
+							conj_ids_consultas[set_u].insert(u_it, *v_it);
+							advance(v_it, 1);
+						} else if (*v_it == *u_it) {
+							respostas[*u_it] = weight;
+							u_it = conj_ids_consultas[set_u].erase(u_it);
+							advance(v_it, 1);
+						} else {
+							advance(u_it, 1);
+						}
 					}
+					//conj_ids_consultas[set_u].splice(conj_ids_consultas[set_u].begin(), conj_ids_consultas[set_v]);
 				} else {
-					conj_disj[x_set].first = y_set;
-					for (list <int>::iterator aux_it = conj_ids_consultas[x_set].begin(); aux_it != conj_ids_consultas[x_set].end(); ++aux_it) {
-						conj_ids_consultas[y_set].push_back(*aux_it);
+					conj_disj[set_u].first = set_v;
+					
+					list < int >::iterator u_it = conj_ids_consultas[set_u].begin();
+					list < int >::iterator v_it = conj_ids_consultas[set_v].begin();
+					while(u_it != conj_ids_consultas[set_u].end()) {
+						if (v_it == conj_ids_consultas[set_v].end() || *u_it < *v_it) {
+							conj_ids_consultas[set_v].insert(v_it, *u_it);
+							advance(u_it, 1);
+						} else if (*v_it == *u_it) {
+							respostas[*u_it] = weight;
+							v_it = conj_ids_consultas[set_v].erase(v_it);
+							advance(u_it, 1);
+						} else {
+							advance(v_it, 1);
+						}
 					}
-					if (conj_disj[x_set].second == conj_disj[y_set].second)
-						conj_disj[y_set].second++;
+					//conj_ids_consultas[set_v].splice(conj_ids_consultas[set_v].begin(), conj_ids_consultas[set_u]);
+					if (conj_disj[set_u].second == conj_disj[set_v].second)
+						conj_disj[set_v].second++;
 				}
-
+				//cout << c << "/" << n << "\n";
 				c++;
 			}
 		}
 		//end of kruskal
+		//cout << "aqui !!" << "\n";
 
 		for (int i=0; i< Q; i++)
 			cout << respostas[i] << "\n";
@@ -135,128 +169,3 @@ int main() {
 
 	return 0;
 }
-
-/*
-int main() {
-	ios::sync_with_stdio(false);
-	cin.tie(NULL);
-	bool consecutive_blocks = false;
-	while (true) {
-		int n, m;
-		vector< list< pi > > graph; // Adjacency list
-		vector< list< pi > > mst; // Adjacency list
-		vector< int > key;            // Keys associated do vertices
-		vector< bool > inMST;        // Control vector
-		vector< int > parent;
-
-		cin >> n >> m;
-		if (cin.fail())
-			return 0;
-
-		if(consecutive_blocks)
-			cout << "\n";
-
-		key.resize( n, INF );
-		inMST.resize( n, false );
-		parent.resize( n, -1 );
-		graph.resize( n );
-		mst.resize ( n );
-
-		for (int i = 0; i < m; i++)
-		{
-			int from, to, weight;
-
-			cin >> from >> to >> weight;
-			if (from == to)
-				continue;
-			graph[from-1].push_back( make_pair( weight, to-1 ) );
-			graph[to-1].push_back( make_pair( weight, from-1 ) );
-		}
-		//end of read input
-
-		//prim modificado
-		int source = 0;
-		priority_queue < pi, vector< pi >, greater< pi > > pq;
-		pq.push( make_pair( 0, source ) );
-		key[source] = 0;
-
-		while (!pq.empty())
-		{
-			int u = pq.top().second;
-			pq.pop();
-
-			inMST[u] = true;
-			list< pi >::iterator it;
-
-			
-			for (it = graph[u].begin(); it != graph[u].end(); ++it)
-			{
-				int weight = it->first;
-				int v = it->second;
-
-				if ((inMST[v] == false) && (key[v] > weight))
-				{
-					key[v] = weight;
-					parent[v] = u;
-					pq.push( make_pair( key[v], v ) );
-				}
-			}
-			if (u != source) {
-				mst[u].push_back( make_pair( key[u], parent[u] ) );
-				mst[parent[u]].push_back( make_pair( key[u], u ) );
-			}
-		}
-		//end of prim modificado
-
-		//queue's
-		int num_queues;
-		cin >> num_queues;
-
-
-		for (int i=0; i<num_queues; i++) {
-			int from, to;
-			cin >> from >> to;
-			from--;
-			to--;
-			//cout << show_better_in_path(from-1, to-1) << "\n";
-
-
-			//bfs
-			queue< int > q;
-			vector< int > dist_to_parent;
-			dist_to_parent.resize( n, -1 );
-
-			q.push( from );
-			dist_to_parent[from] = 0;
-
-			while (!q.empty())
-			{
-				int v = q.front();
-				q.pop();
-
-				list< pi >::iterator it;
-				// Enqueue all adjacent of v and mark them visited
-				for (it = mst[v].begin(); it != mst[v].end(); ++it)
-				{
-					int weight = it->first;
-					int vis = it->second;
-
-					if (dist_to_parent[vis] == -1)
-					{
-						dist_to_parent[vis] = (dist_to_parent[v] > weight)? dist_to_parent[v] : weight;
-						if (vis == to){
-							break;
-						}else
-							q.push( vis );
-					}
-				}
-			}
-			// end of bfs()
-
-			cout << dist_to_parent[to] << "\n";
-			consecutive_blocks = true;
-		}
-	}
-	return 0;
-}
-*/
